@@ -11,17 +11,20 @@ import io.searchbox.core.Search;
 import io.searchbox.indices.CreateIndex;
 import io.searchbox.indices.DeleteIndex;
 
+import java.util.Date;
 import java.util.List;
 
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 
-import com.tryout.jest.domain.Note;
+import com.tryout.jest.domain.Build;
 
 public class RunMe {
-    private static final String NOTES_TYPE_NAME = "notes";
-    private static final String DIARY_INDEX_NAME = "diary";
+    private static final String BUILDS_TYPE_NAME = "builds";
+    //INFO: this should be all lower case.
+    //INFO: when exception you have to use getItems to get the error.
+    private static final String HISTORY_INDEX_NAME = "buildhistory";
 
     public static void main(String[] args) {
         try {
@@ -56,28 +59,28 @@ public class RunMe {
         Settings.Builder settings = Settings.settingsBuilder();
         settings.put("number_of_shards", 3);
         settings.put("number_of_replicas", 0);
-        jestClient.execute(new CreateIndex.Builder(DIARY_INDEX_NAME).settings(
+        jestClient.execute(new CreateIndex.Builder(HISTORY_INDEX_NAME).settings(
                 settings.build().getAsMap()).build());
     }
 
     private static void readAllData(final JestClient jestClient)
             throws Exception {
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        searchSourceBuilder.query(QueryBuilders.termQuery("note", "see"));
+        searchSourceBuilder.query(QueryBuilders.termQuery("userName", "mrajann"));
 
         Search search = new Search.Builder(searchSourceBuilder.toString())
-                .addIndex(DIARY_INDEX_NAME).addType(NOTES_TYPE_NAME).build();
+                .addIndex(HISTORY_INDEX_NAME).addType(BUILDS_TYPE_NAME).build();
         System.out.println(searchSourceBuilder.toString());
         JestResult result = jestClient.execute(search);
-        List<Note> notes = result.getSourceAsObjectList(Note.class);
-        for (Note note : notes) {
-            System.out.println(note);
+        List<Build> builds = result.getSourceAsObjectList(Build.class);
+        for (Build build : builds) {
+            System.out.println(build);
         }
     }
 
     private static void deleteTestIndex(final JestClient jestClient)
             throws Exception {
-        DeleteIndex deleteIndex = new DeleteIndex.Builder(DIARY_INDEX_NAME)
+        DeleteIndex deleteIndex = new DeleteIndex.Builder(HISTORY_INDEX_NAME)
                 .build();
         jestClient.execute(deleteIndex);
     }
@@ -85,39 +88,39 @@ public class RunMe {
     private static void indexSomeData(final JestClient jestClient)
             throws Exception {
         // Blocking index
-        final Note note1 = new Note("mthomas", "Note1: do u see this - "
-                + System.currentTimeMillis());
-        Index index = new Index.Builder(note1).index(DIARY_INDEX_NAME)
-                .type(NOTES_TYPE_NAME).build();
+        final Build build1 = new Build("mrajann", "Build1: do u see this - "
+                + (new Date()));
+        Index index = new Index.Builder(build1).index(HISTORY_INDEX_NAME)
+                .type(BUILDS_TYPE_NAME).build();
         jestClient.execute(index);
 
         // Asynch index
-        final Note note2 = new Note("mthomas", "Note2: do u see this - "
-                + System.currentTimeMillis());
-        index = new Index.Builder(note2).index(DIARY_INDEX_NAME)
-                .type(NOTES_TYPE_NAME).build();
+        final Build build2 = new Build("mrajann", "Build2: do u see this - "
+                + (new Date()));
+        index = new Index.Builder(build2).index(HISTORY_INDEX_NAME)
+                .type(BUILDS_TYPE_NAME).build();
         jestClient.executeAsync(index, new JestResultHandler<JestResult>() {
             public void failed(Exception ex) {
             }
 
             public void completed(JestResult result) {
-                note2.setId((String) result.getValue("_id"));
-                System.out.println("completed==>>" + note2);
+                build2.setId((String) result.getValue("_id"));
+                System.out.println("completed==>>" + build2);
             }
         });
 
         // bulk index
-        final Note note3 = new Note("mthomas", "Note3: do u see this - "
-                + System.currentTimeMillis());
-        final Note note4 = new Note("mthomas", "Note4: do u see this - "
-                + System.currentTimeMillis());
+        final Build build3 = new Build("mrajann", "Build3: do u see this - "
+        		+ (new Date()));
+        final Build build4 = new Build("mrajann", "Build4: do u see this - "
+        		+ (new Date()));
         Bulk bulk = new Bulk.Builder()
                 .addAction(
-                        new Index.Builder(note3).index(DIARY_INDEX_NAME)
-                                .type(NOTES_TYPE_NAME).build())
+                        new Index.Builder(build3).index(HISTORY_INDEX_NAME)
+                                .type(BUILDS_TYPE_NAME).build())
                 .addAction(
-                        new Index.Builder(note4).index(DIARY_INDEX_NAME)
-                                .type(NOTES_TYPE_NAME).build()).build();
+                        new Index.Builder(build4).index(HISTORY_INDEX_NAME)
+                                .type(BUILDS_TYPE_NAME).build()).build();
         JestResult result = jestClient.execute(bulk);
 
         Thread.sleep(2000);
