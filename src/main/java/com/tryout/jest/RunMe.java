@@ -66,6 +66,7 @@ public class RunMe {
     private static void readAllData(final JestClient jestClient)
             throws Exception {
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        //INFO: use the par
         searchSourceBuilder.query(QueryBuilders.termQuery("userName", "mrajann"));
 
         Search search = new Search.Builder(searchSourceBuilder.toString())
