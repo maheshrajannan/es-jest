@@ -26,6 +26,9 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 public class CompletedBuild implements Indexable {
 	private static final long serialVersionUID = -3971912226293959387L;
 
+	//INFO: id, should be part of this class and NOT a part of an extending class.
+	//That sucks.
+	//TODO: fix it or find an alternative..This draw back will create a lot of repetitive code.
 	@JestId
 	private String id;
 
