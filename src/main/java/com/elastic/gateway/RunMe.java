@@ -1,4 +1,4 @@
-package com.tryout.jest;
+package com.elastic.gateway;
 
 import io.searchbox.client.JestClient;
 import io.searchbox.client.JestClientFactory;
@@ -18,7 +18,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 
-import com.tryout.jest.domain.CompletedBuild;
+import com.elastic.gateway.domain.CompletedBuild;
 
 public class RunMe {
     private static final String BUILDS_TYPE_NAME = "builds";

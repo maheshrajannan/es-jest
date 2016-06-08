@@ -1,4 +1,4 @@
-package com.tryout.jest.domain;
+package com.elastic.gateway.domain;
 
 import io.searchbox.annotations.JestId;
 
