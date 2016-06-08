@@ -117,7 +117,7 @@ public class RunMe {
         		"SampleProject",3, new Date(System.currentTimeMillis()-1000), "mrajann");
         Thread.sleep(250);
         final CompletedBuild build4 = CompletedBuild.getInstance(
-        		"SampleProject",2, new Date(System.currentTimeMillis()-1000), "mrajann");
+        		"SampleProject",4, new Date(System.currentTimeMillis()-1000), "mrajann");
         Bulk bulk = new Bulk.Builder()
                 .addAction(
                         new Index.Builder(build3).index(HISTORY_INDEX_NAME)

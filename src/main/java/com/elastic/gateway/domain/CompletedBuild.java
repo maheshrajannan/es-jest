@@ -2,7 +2,6 @@ package com.elastic.gateway.domain;
 
 import io.searchbox.annotations.JestId;
 
-import java.io.Serializable;
 import java.util.Date;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -24,7 +23,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
  * @author maheshrajannan
  *
  */
-public class CompletedBuild implements Serializable {
+public class CompletedBuild implements Indexable {
 	private static final long serialVersionUID = -3971912226293959387L;
 
 	@JestId
