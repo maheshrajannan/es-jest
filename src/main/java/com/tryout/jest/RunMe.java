@@ -18,7 +18,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 
-import com.tryout.jest.domain.Build;
+import com.tryout.jest.domain.CompletedBuild;
 
 public class RunMe {
     private static final String BUILDS_TYPE_NAME = "builds";
@@ -67,15 +67,15 @@ public class RunMe {
             throws Exception {
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         //INFO: use the par
-        searchSourceBuilder.query(QueryBuilders.termQuery("userName", "mrajann"));
+        searchSourceBuilder.query(QueryBuilders.termQuery("startedBy", "mrajann"));
 
         Search search = new Search.Builder(searchSourceBuilder.toString())
                 .addIndex(HISTORY_INDEX_NAME).addType(BUILDS_TYPE_NAME).build();
         System.out.println(searchSourceBuilder.toString());
         JestResult result = jestClient.execute(search);
-        List<Build> builds = result.getSourceAsObjectList(Build.class);
-        for (Build build : builds) {
-            System.out.println(build);
+        List<CompletedBuild> completedBuilds = result.getSourceAsObjectList(CompletedBuild.class);
+        for (CompletedBuild completedBuild : completedBuilds) {
+            System.out.println(completedBuild);
         }
     }
 
@@ -89,15 +89,16 @@ public class RunMe {
     private static void indexSomeData(final JestClient jestClient)
             throws Exception {
         // Blocking index
-        final Build build1 = new Build("mrajann", "Build1: do u see this - "
-                + (new Date()));
+        final CompletedBuild build1 = CompletedBuild.getInstance(
+        		"SampleProject", new Date(System.currentTimeMillis()-1000), "mrajann");
         Index index = new Index.Builder(build1).index(HISTORY_INDEX_NAME)
                 .type(BUILDS_TYPE_NAME).build();
         jestClient.execute(index);
 
         // Asynch index
-        final Build build2 = new Build("mrajann", "Build2: do u see this - "
-                + (new Date()));
+        Thread.sleep(250);
+        final CompletedBuild build2 = CompletedBuild.getInstance(
+        		"SampleProject",2, new Date(System.currentTimeMillis()-1000), "mrajann");
         index = new Index.Builder(build2).index(HISTORY_INDEX_NAME)
                 .type(BUILDS_TYPE_NAME).build();
         jestClient.executeAsync(index, new JestResultHandler<JestResult>() {
@@ -111,10 +112,12 @@ public class RunMe {
         });
 
         // bulk index
-        final Build build3 = new Build("mrajann", "Build3: do u see this - "
-        		+ (new Date()));
-        final Build build4 = new Build("mrajann", "Build4: do u see this - "
-        		+ (new Date()));
+        Thread.sleep(250);
+        final CompletedBuild build3 = CompletedBuild.getInstance(
+        		"SampleProject",3, new Date(System.currentTimeMillis()-1000), "mrajann");
+        Thread.sleep(250);
+        final CompletedBuild build4 = CompletedBuild.getInstance(
+        		"SampleProject",2, new Date(System.currentTimeMillis()-1000), "mrajann");
         Bulk bulk = new Bulk.Builder()
                 .addAction(
                         new Index.Builder(build3).index(HISTORY_INDEX_NAME)
@@ -124,7 +127,7 @@ public class RunMe {
                                 .type(BUILDS_TYPE_NAME).build()).build();
         JestResult result = jestClient.execute(bulk);
 
-        Thread.sleep(2000);
+        Thread.sleep(500);
 
         System.out.println(result.toString());
     }
