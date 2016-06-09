@@ -44,6 +44,10 @@ public class ElasticWrapper {
 	 */
 	private String elasticServerUrl;
 
+	@SuppressWarnings("unused")
+	private ElasticWrapper() {
+		
+	}
 	/**
 	 * TODO: lot of null checks.
 	 * 

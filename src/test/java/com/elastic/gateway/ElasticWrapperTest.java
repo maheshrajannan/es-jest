@@ -69,7 +69,7 @@ public class ElasticWrapperTest {
 
 		assertNotNull("Empty build property buildNumber ",
 				build2.getBuildNumber());
-		assertTrue("Empty build property buildNumber ",
+		assertTrue("Empty build property buildNumber "+build2,
 				build2.getBuildNumber() > 0);
 
 		assertNotNull("Empty build property projectName ",
