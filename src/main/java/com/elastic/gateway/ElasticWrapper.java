@@ -67,6 +67,7 @@ public class ElasticWrapper {
 		// create new index (if u have this in elasticsearch.yml and prefer
 		// those defaults, then leave this out
 		Settings.Builder settings = Settings.settingsBuilder();
+		//TODO: move these to properties files.
 		settings.put("number_of_shards", 3);
 		settings.put("number_of_replicas", 0);
 		jestClient.execute(new CreateIndex.Builder(history)
@@ -105,8 +106,8 @@ public class ElasticWrapper {
 	 */
 	public void deleteTestIndex() throws Exception {
 		DeleteIndex deleteIndex = new DeleteIndex.Builder(this.history).build();
-		jestClient.execute(deleteIndex);
-		System.out.println("Successfully delted " + this.history);
+		JestResult jestResult = jestClient.execute(deleteIndex);
+		System.out.println("Successfully delted " + this.history + " result is " + jestResult);
 	}
 
 	/**
