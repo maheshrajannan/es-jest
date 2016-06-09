@@ -1,134 +1,129 @@
 package com.elastic.gateway;
 
-import io.searchbox.client.JestClient;
-import io.searchbox.client.JestClientFactory;
-import io.searchbox.client.JestResult;
-import io.searchbox.client.JestResultHandler;
-import io.searchbox.client.config.HttpClientConfig;
-import io.searchbox.core.Bulk;
-import io.searchbox.core.Index;
-import io.searchbox.core.Search;
-import io.searchbox.indices.CreateIndex;
-import io.searchbox.indices.DeleteIndex;
-
-import java.util.Date;
+import java.io.IOException;
 import java.util.List;
 
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 
-import com.elastic.gateway.domain.CompletedBuild;
+import com.elastic.gateway.domain.Indexable;
 
+import io.searchbox.client.JestClient;
+import io.searchbox.client.JestClientFactory;
+import io.searchbox.client.JestResult;
+import io.searchbox.client.config.HttpClientConfig;
+import io.searchbox.core.DocumentResult;
+import io.searchbox.core.Index;
+import io.searchbox.core.Search;
+import io.searchbox.indices.CreateIndex;
+import io.searchbox.indices.DeleteIndex;
+
+/**
+ * TODO: lot of null checks.
+ * 
+ * @author maheshrajannan
+ *
+ */
 public class ElasticWrapper {
-    private static final String BUILDS_TYPE_NAME = "builds";
-    //INFO: this should be all lower case.
-    //INFO: when exception you have to use getItems to get the error.
-    private static final String HISTORY_INDEX_NAME = "buildhistory";
+	/**
+	 * At instance level for a good reason.
+	 */
+	private JestClient jestClient = null;
+	/**
+	 * say "buildhistory" in small caps.
+	 */
+	private String history;
+	/**
+	 * say "build".
+	 */
+	private String typeName;
 
-    public static void main(String[] args) {
-        try {
-            // Get Jest client
-            HttpClientConfig clientConfig = new HttpClientConfig.Builder(
-                    "http://localhost:9200").multiThreaded(true).build();
-            JestClientFactory factory = new JestClientFactory();
-            factory.setHttpClientConfig(clientConfig);
-            JestClient jestClient = factory.getObject();
+	/**
+	 * "http://localhost:9200"
+	 */
+	private String elasticServerUrl;
 
-            try {
-                // run test index & searching
-                ElasticWrapper.deleteTestIndex(jestClient);
-                ElasticWrapper.createTestIndex(jestClient);
-                ElasticWrapper.indexSomeData(jestClient);
-                ElasticWrapper.readAllData(jestClient);
-            } finally {
-                // shutdown client
-                jestClient.shutdownClient();
-            }
+	/**
+	 * TODO: lot of null checks.
+	 * 
+	 * @param typeName
+	 * @param history
+	 *            all lower case like "buildhistory"
+	 * @param elasticServerUrl
+	 *            "http://localhost:9200"
+	 * @throws IOException
+	 */
+	public ElasticWrapper(String typeName, String history,
+			String elasticServerUrl) throws IOException {
+		this.history = history;
+		this.typeName = typeName;
+		this.elasticServerUrl = elasticServerUrl;
+		HttpClientConfig clientConfig = new HttpClientConfig.Builder(
+				elasticServerUrl).multiThreaded(true).build();
+		JestClientFactory factory = new JestClientFactory();
+		factory.setHttpClientConfig(clientConfig);
+		jestClient = factory.getObject();
+		// create new index (if u have this in elasticsearch.yml and prefer
+		// those defaults, then leave this out
+		Settings.Builder settings = Settings.settingsBuilder();
+		settings.put("number_of_shards", 3);
+		settings.put("number_of_replicas", 0);
+		jestClient.execute(new CreateIndex.Builder(history)
+				.settings(settings.build().getAsMap()).build());
+	}
 
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
+	/**
+	 * 
+	 * @param type
+	 * @param searchTerm
+	 * @param searchValue
+	 * @return
+	 * @throws Exception
+	 */
+	public <T> List<T> readAllData(Class<T> typeClass, String searchTerm,
+			String searchValue) throws Exception {
 
-    private static void createTestIndex(final JestClient jestClient)
-            throws Exception {
+		SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+		searchSourceBuilder
+				.query(QueryBuilders.termQuery(searchTerm, searchValue));
 
-        // create new index (if u have this in elasticsearch.yml and prefer
-        // those defaults, then leave this out
-        Settings.Builder settings = Settings.settingsBuilder();
-        settings.put("number_of_shards", 3);
-        settings.put("number_of_replicas", 0);
-        jestClient.execute(new CreateIndex.Builder(HISTORY_INDEX_NAME).settings(
-                settings.build().getAsMap()).build());
-    }
+		Search search = new Search.Builder(searchSourceBuilder.toString())
+				.addIndex(history).addType(typeName).build();
+		System.out.println(searchSourceBuilder.toString());
+		JestResult jestResult = jestClient.execute(search);
+		List<T> results = jestResult.getSourceAsObjectList(typeClass);
+		for (T result : results) {
+			System.out.println(result);
+		}
+		return results;
+	}
 
-    private static void readAllData(final JestClient jestClient)
-            throws Exception {
-        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        //INFO: use the par
-        searchSourceBuilder.query(QueryBuilders.termQuery("startedBy", "mrajann"));
+	/**
+	 * @param jestClient
+	 * @throws Exception
+	 */
+	public void deleteTestIndex() throws Exception {
+		DeleteIndex deleteIndex = new DeleteIndex.Builder(this.history).build();
+		jestClient.execute(deleteIndex);
+		System.out.println("Successfully delted " + this.history);
+	}
 
-        Search search = new Search.Builder(searchSourceBuilder.toString())
-                .addIndex(HISTORY_INDEX_NAME).addType(BUILDS_TYPE_NAME).build();
-        System.out.println(searchSourceBuilder.toString());
-        JestResult result = jestClient.execute(search);
-        List<CompletedBuild> completedBuilds = result.getSourceAsObjectList(CompletedBuild.class);
-        for (CompletedBuild completedBuild : completedBuilds) {
-            System.out.println(completedBuild);
-        }
-    }
+	/**
+	 * @param <T>
+	 * @param jestClient
+	 * @param data
+	 * @return
+	 * @throws Exception
+	 */
+	public <T extends Indexable> T syncIndex(T data) throws Exception {
+		Index index = new Index.Builder(data).index(this.history)
+				.type(this.typeName).build();
+		DocumentResult result = jestClient.execute(index);
+		System.out.println("Indexed " + data + " as " + result);
+		data.setId(result.getId());
+		System.out.println("After Setting id " + data);
+		return data;
+	}
 
-    private static void deleteTestIndex(final JestClient jestClient)
-            throws Exception {
-        DeleteIndex deleteIndex = new DeleteIndex.Builder(HISTORY_INDEX_NAME)
-                .build();
-        jestClient.execute(deleteIndex);
-    }
-
-    private static void indexSomeData(final JestClient jestClient)
-            throws Exception {
-        // Blocking index
-        final CompletedBuild build1 = CompletedBuild.getInstance(
-        		"SampleProject", new Date(System.currentTimeMillis()-1000), "mrajann");
-        Index index = new Index.Builder(build1).index(HISTORY_INDEX_NAME)
-                .type(BUILDS_TYPE_NAME).build();
-        jestClient.execute(index);
-
-        // Asynch index
-        Thread.sleep(250);
-        final CompletedBuild build2 = CompletedBuild.getInstance(
-        		"SampleProject",2, new Date(System.currentTimeMillis()-1000), "mrajann");
-        index = new Index.Builder(build2).index(HISTORY_INDEX_NAME)
-                .type(BUILDS_TYPE_NAME).build();
-        jestClient.executeAsync(index, new JestResultHandler<JestResult>() {
-            public void failed(Exception ex) {
-            }
-
-            public void completed(JestResult result) {
-                build2.setId((String) result.getValue("_id"));
-                System.out.println("completed==>>" + build2);
-            }
-        });
-
-        // bulk index
-        Thread.sleep(250);
-        final CompletedBuild build3 = CompletedBuild.getInstance(
-        		"SampleProject",3, new Date(System.currentTimeMillis()-1000), "mrajann");
-        Thread.sleep(250);
-        final CompletedBuild build4 = CompletedBuild.getInstance(
-        		"SampleProject",4, new Date(System.currentTimeMillis()-1000), "mrajann");
-        Bulk bulk = new Bulk.Builder()
-                .addAction(
-                        new Index.Builder(build3).index(HISTORY_INDEX_NAME)
-                                .type(BUILDS_TYPE_NAME).build())
-                .addAction(
-                        new Index.Builder(build4).index(HISTORY_INDEX_NAME)
-                                .type(BUILDS_TYPE_NAME).build()).build();
-        JestResult result = jestClient.execute(bulk);
-
-        Thread.sleep(500);
-
-        System.out.println(result.toString());
-    }
 }

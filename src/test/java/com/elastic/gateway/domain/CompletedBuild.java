@@ -26,9 +26,11 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 public class CompletedBuild implements Indexable {
 	private static final long serialVersionUID = -3971912226293959387L;
 
-	//INFO: id, should be part of this class and NOT a part of an extending class.
-	//That sucks.
-	//TODO: fix it or find an alternative..This draw back will create a lot of repetitive code.
+	// INFO: id, should be part of this class and NOT a part of an extending
+	// class.
+	// That sucks.
+	// TODO: fix it or find an alternative..This draw back will create a lot of
+	// repetitive code.
 	@JestId
 	private String id;
 
@@ -55,8 +57,9 @@ public class CompletedBuild implements Indexable {
 	 * @param status
 	 * @param timeTaken
 	 */
-	private CompletedBuild(String projectName, int buildNumber, Date startedAt, String startedBy, String startedNode,
-			String status, long timeTaken) {
+	private CompletedBuild(String projectName, int buildNumber, Date startedAt,
+			String startedBy, String startedNode, String status,
+			long timeTaken) {
 		super();
 		this.projectName = projectName;
 		this.buildNumber = buildNumber;
@@ -72,14 +75,17 @@ public class CompletedBuild implements Indexable {
 	 * @param startedAt
 	 * @param startedBy
 	 */
-	private CompletedBuild(String projectName, Date startedAt, String startedBy) {
-		this(projectName, 1,  startedAt,  startedBy, "Jenkins Server",
-				"completed", (new Date()).getTime()-startedAt.getTime());
+	private CompletedBuild(String projectName, Date startedAt,
+			String startedBy) {
+		this(projectName, 1, startedAt, startedBy, "Jenkins Server", "SUCCESS",
+				(new Date()).getTime() - startedAt.getTime());
 	}
-	
-	public CompletedBuild(String projectName, int buildNumber, Date startedAt, String startedBy) {
-		this(projectName, buildNumber,  startedAt,  startedBy, "Jenkins Server",
-				"completed", (new Date()).getTime()-startedAt.getTime());	}
+
+	public CompletedBuild(String projectName, int buildNumber, Date startedAt,
+			String startedBy) {
+		this(projectName, buildNumber, startedAt, startedBy, "Jenkins Server",
+				"SUCCESS", (new Date()).getTime() - startedAt.getTime());
+	}
 
 	/**
 	 * @param projectName
@@ -87,9 +93,11 @@ public class CompletedBuild implements Indexable {
 	 * @param startedBy
 	 * @return
 	 */
-	public static CompletedBuild getInstance(String projectName, Date startedAt, String startedBy) {
+	public static CompletedBuild getInstance(String projectName, Date startedAt,
+			String startedBy) {
 		return new CompletedBuild(projectName, startedAt, startedBy);
 	}
+
 	/**
 	 * @param projectName
 	 * @param buildNumber
@@ -97,9 +105,13 @@ public class CompletedBuild implements Indexable {
 	 * @param startedBy
 	 * @return
 	 */
-	public static CompletedBuild getInstance(String projectName,int buildNumber, Date startedAt, String startedBy) {
-		return new CompletedBuild(projectName,buildNumber, startedAt, startedBy);
-	}	/**
+	public static CompletedBuild getInstance(String projectName,
+			int buildNumber, Date startedAt, String startedBy) {
+		return new CompletedBuild(projectName, buildNumber, startedAt,
+				startedBy);
+	}
+
+	/**
 	 * @param projectName
 	 * @param buildNumber
 	 * @param startedAt
@@ -109,10 +121,14 @@ public class CompletedBuild implements Indexable {
 	 * @param timeTaken
 	 * @return
 	 */
-	public static CompletedBuild getInstance(String projectName, int buildNumber, Date startedAt, String startedBy, String startedNode,
-			String status, long timeTaken) {;
-		return new CompletedBuild(projectName, buildNumber, startedAt, startedBy, startedNode, status, timeTaken);
+	public static CompletedBuild getInstance(String projectName,
+			int buildNumber, Date startedAt, String startedBy,
+			String startedNode, String status, long timeTaken) {
+		;
+		return new CompletedBuild(projectName, buildNumber, startedAt,
+				startedBy, startedNode, status, timeTaken);
 	}
+
 	public String getId() {
 		return id;
 	}
@@ -176,8 +192,8 @@ public class CompletedBuild implements Indexable {
 	public void setTimeTaken(long timeTaken) {
 		this.timeTaken = timeTaken;
 	}
-	
-	public String toString(){
+
+	public String toString() {
 		return ToStringBuilder.reflectionToString(this);
 	}
 }
